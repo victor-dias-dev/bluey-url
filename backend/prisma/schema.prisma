@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserPlan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum RedirectType {
+  PERMANENT  // 301
+  TEMPORARY  // 302
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  plan      UserPlan @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  urls      Url[]
+  domains   Domain[]
+  clickEvents ClickEvent[]
+
+  @@map("users")
+}
+
+model Domain {
+  id          String   @id @default(uuid())
+  domain      String   @unique
+  userId      String
+  verified    Boolean  @default(false)
+  verifiedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  urls        Url[]
+
+  @@map("domains")
+}
+
+model Url {
+  id          String       @id @default(uuid())
+  shortCode   String
+  originalUrl String
+  userId      String?
+  domainId    String?
+  expiresAt   DateTime?
+  isActive    Boolean      @default(true)
+  redirectType RedirectType @default(PERMANENT)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  domain      Domain?      @relation(fields: [domainId], references: [id], onDelete: SetNull)
+  clickEvents ClickEvent[]
+
+  @@unique([shortCode, domainId])
+  @@index([shortCode, domainId])
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("urls")
+}
+
+model ClickEvent {
+  id        String   @id @default(uuid())
+  urlId     String
+  userId    String?
+  timestamp DateTime @default(now())
+  ip        String?
+  userAgent String?
+  country   String?
+  city      String?
+  device    String?
+  browser   String?
+  os        String?
+
+  url       Url      @relation(fields: [urlId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([urlId, timestamp])
+  @@index([userId])
+  @@index([timestamp])
+  @@map("click_events")
+}
+
