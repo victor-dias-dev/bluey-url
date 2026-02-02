@@ -10,7 +10,7 @@ export async function domainRoutes(server: FastifyInstance) {
   // List domains
   server.get('/', {
     preHandler: [server.authenticate],
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest) => {
     const { userId } = request.user as { userId: string };
     
     const domains = await prisma.domain.findMany({

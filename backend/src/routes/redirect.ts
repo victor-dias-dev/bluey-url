@@ -86,6 +86,11 @@ export async function redirectRoutes(server: FastifyInstance) {
       server.log.error({ err }, 'Failed to publish click event');
     });
     
+    // Ensure originalUrl is not null before redirecting
+    if (!originalUrl) {
+      return reply.code(404).send({ error: 'URL not found' });
+    }
+    
     // Redirect
     return reply.redirect(redirectType, originalUrl);
   });

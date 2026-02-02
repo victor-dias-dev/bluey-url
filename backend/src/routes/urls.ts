@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { redis } from '../lib/redis';
 import { generateShortCode } from '../utils/shortCode';
-import { config } from '../config';
 
 const createUrlSchema = z.object({
   originalUrl: z.string().url(),
@@ -109,7 +108,7 @@ export async function urlRoutes(server: FastifyInstance) {
   // List URLs
   server.get('/', {
     preHandler: [server.authenticate],
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest) => {
     const { userId } = request.user as { userId: string };
     
     const urls = await prisma.url.findMany({

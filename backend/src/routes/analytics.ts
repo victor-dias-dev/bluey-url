@@ -76,15 +76,15 @@ export async function analyticsRoutes(server: FastifyInstance) {
     
     return {
       totalClicks,
-      clicksByDate: clicksByDate.map((item) => ({
+      clicksByDate: clicksByDate.map((item: { timestamp: Date; _count: { id: number } }) => ({
         date: item.timestamp.toISOString().split('T')[0],
         count: item._count.id,
       })),
-      clicksByCountry: clicksByCountry.map((item) => ({
+      clicksByCountry: clicksByCountry.map((item: { country: string | null; _count: { id: number } }) => ({
         country: item.country || 'Unknown',
         count: item._count.id,
       })),
-      clicksByDevice: clicksByDevice.map((item) => ({
+      clicksByDevice: clicksByDevice.map((item: { device: string | null; _count: { id: number } }) => ({
         device: item.device || 'Unknown',
         count: item._count.id,
       })),

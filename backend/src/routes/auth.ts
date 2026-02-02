@@ -94,7 +94,7 @@ export async function authRoutes(server: FastifyInstance) {
   // Get current user
   server.get('/me', {
     preHandler: [server.authenticate],
-  }, async (request: FastifyRequest, reply: FastifyReply) => {
+  }, async (request: FastifyRequest) => {
     const { userId } = request.user as { userId: string };
     
     const user = await prisma.user.findUnique({
