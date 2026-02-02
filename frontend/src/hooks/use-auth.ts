@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authApi, LoginDto, RegisterDto } from '@/services/api';
+import { authApi } from '@/services/api';
+import { LoginDto, RegisterDto } from '@/types/api';
 import { useToast } from './use-toast';
 import { useRouter } from 'next/navigation';
 

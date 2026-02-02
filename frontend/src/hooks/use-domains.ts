@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { domainsApi, CreateDomainDto } from '@/services/api';
+import { domainsApi } from '@/services/api';
+import { CreateDomainDto } from '@/types/api';
 import { useToast } from './use-toast';
 
 export function useDomains() {

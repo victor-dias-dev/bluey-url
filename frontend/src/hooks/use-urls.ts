@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { urlsApi, CreateUrlDto, UpdateUrlDto } from '@/services/api';
-import { Url } from '@/types/api';
+import { urlsApi } from '@/services/api';
+import { Url, CreateUrlDto, UpdateUrlDto } from '@/types/api';
 import { useToast } from './use-toast';
 
 export function useUrls() {
