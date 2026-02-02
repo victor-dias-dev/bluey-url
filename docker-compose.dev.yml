@@ -1,0 +1,53 @@
+version: '3.8'
+
+# Docker Compose para desenvolvimento
+# Inclui PostgreSQL e Redis, mas o backend roda localmente
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bluey-url-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bluey_user
+      POSTGRES_PASSWORD: bluey_password
+      POSTGRES_DB: bluey_url
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bluey_user -d bluey_url"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bluey-network-dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: bluey-url-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_dev:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bluey-network-dev
+
+volumes:
+  postgres_data_dev:
+    driver: local
+  redis_data_dev:
+    driver: local
+
+networks:
+  bluey-network-dev:
+    driver: bridge
+

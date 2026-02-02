@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bluey-url-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bluey_user
+      POSTGRES_PASSWORD: bluey_password
+      POSTGRES_DB: bluey_url
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bluey_user -d bluey_url"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bluey-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: bluey-url-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bluey-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  bluey-network:
+    driver: bridge
+

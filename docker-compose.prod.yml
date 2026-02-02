@@ -1,0 +1,79 @@
+version: '3.8'
+
+# Docker Compose para produção
+# Inclui PostgreSQL, Redis e Backend
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: bluey-url-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-bluey_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bluey_password}
+      POSTGRES_DB: ${POSTGRES_DB:-bluey_url}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bluey_user} -d ${POSTGRES_DB:-bluey_url}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bluey-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: bluey-url-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bluey-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bluey-url-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bluey_user}:${POSTGRES_PASSWORD:-bluey_password}@postgres:5432/${POSTGRES_DB:-bluey_url}?schema=public
+      REDIS_URL: redis://redis:6379
+      PORT: 3000
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
+      RATE_LIMIT_TIME_WINDOW: ${RATE_LIMIT_TIME_WINDOW:-60000}
+      QUEUE_NAME: ${QUEUE_NAME:-analytics-queue}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - bluey-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  bluey-network:
+    driver: bridge
+
