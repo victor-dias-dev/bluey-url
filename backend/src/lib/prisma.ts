@@ -12,8 +12,22 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
+// Test database connection on startup
+prisma.$connect().catch((err) => {
+  console.error('Failed to connect to database:', err);
+  process.exit(1);
+});
+
 // Graceful shutdown
 process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect();
+});
+
+process.on('SIGINT', async () => {
   await prisma.$disconnect();
 });
 
