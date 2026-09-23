@@ -22,7 +22,7 @@ export function UrlList() {
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
         <p className="text-muted-foreground">Nenhuma URL criada ainda.</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Clique em "Nova URL" para começar.
+          Clique em Nova URL para começar.
         </p>
       </div>
     );

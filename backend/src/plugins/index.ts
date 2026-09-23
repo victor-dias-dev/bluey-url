@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
@@ -14,32 +14,33 @@ export async function registerPlugins(server: FastifyInstance) {
   });
 
   await server.register(helmet, {
-    contentSecurityPolicy: false, // Ajustar conforme necessário
+    contentSecurityPolicy: false,
   });
 
   await server.register(cors, {
-    origin: config.nodeEnv === 'production' 
-      ? ['https://bluey-short-url-frontend.vercel.app'] // Configurar domínio de produção
-      : true, // Permite todos em desenvolvimento
+    origin: config.cors.origin,
     credentials: true,
   });
 
-  // Rate limiting
   await server.register(rateLimit, {
     max: config.rateLimit.max,
     timeWindow: config.rateLimit.timeWindow,
   });
 
-  // Register auth middleware
-  server.decorate('authenticate', async function(request: any, reply: any) {
+  server.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {
       await request.jwtVerify();
-      if (!request.user || !request.user.userId) {
+      const payload = request.user;
+      if (
+        !payload ||
+        typeof payload !== 'object' ||
+        !('userId' in payload) ||
+        typeof payload.userId !== 'string'
+      ) {
         return reply.code(401).send({ error: 'Invalid token' });
       }
-    } catch (err) {
+    } catch {
       return reply.code(401).send({ error: 'Unauthorized' });
     }
   });
 }
-

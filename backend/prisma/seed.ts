@@ -22,8 +22,15 @@ async function main() {
   
   console.log('✅ Created test user:', user.email);
   
-  // Create test URL
-  const url = await prisma.url.create({
+  const existingUrl = await prisma.url.findFirst({
+    where: {
+      shortCode: 'test123',
+      domainId: null,
+      userId: user.id,
+    },
+  });
+
+  const url = existingUrl ?? await prisma.url.create({
     data: {
       shortCode: 'test123',
       originalUrl: 'https://example.com',

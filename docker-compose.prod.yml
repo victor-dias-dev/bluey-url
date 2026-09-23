@@ -43,8 +43,8 @@ services:
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: bluey-url-backend
     restart: unless-stopped
     ports:
@@ -59,6 +59,8 @@ services:
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
       RATE_LIMIT_TIME_WINDOW: ${RATE_LIMIT_TIME_WINDOW:-60000}
       QUEUE_NAME: ${QUEUE_NAME:-analytics-queue}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://bluey-short-url-frontend.vercel.app}
+      API_URL: ${API_URL:-http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy

@@ -27,8 +27,21 @@ import {
 } from '@/components/ui/select';
 
 const createUrlSchema = z.object({
-  originalUrl: z.string().url('URL inválida'),
-  shortCode: z.string().optional(),
+  originalUrl: z
+    .string()
+    .trim()
+    .url('URL inválida')
+    .refine(
+      (value) => value.startsWith('http://') || value.startsWith('https://'),
+      'Use uma URL http ou https'
+    ),
+  shortCode: z
+    .string()
+    .trim()
+    .refine((value) => value.length === 0 || /^[a-zA-Z0-9]{3,20}$/.test(value), {
+      message: 'Use de 3 a 20 letras ou números, sem espaços ou hífen',
+    })
+    .optional(),
   domainId: z.string().optional(),
   expiresAt: z.string().optional(),
 });
@@ -55,9 +68,10 @@ export function CreateUrlDialog({ children }: { children: React.ReactNode }) {
   const onSubmit = (data: CreateUrlFormData) => {
     createUrl(
       {
-        ...data,
+        originalUrl: data.originalUrl,
+        shortCode: data.shortCode?.trim() || undefined,
         domainId: data.domainId || undefined,
-        expiresAt: data.expiresAt || undefined,
+        expiresAt: data.expiresAt ? new Date(data.expiresAt).toISOString() : undefined,
       },
       {
         onSuccess: () => {
@@ -122,7 +136,7 @@ export function CreateUrlDialog({ children }: { children: React.ReactNode }) {
             <Input
               id="shortCode"
               type="text"
-              placeholder="meu-link"
+              placeholder="meulink"
               {...register('shortCode')}
             />
             {errors.shortCode && (
@@ -130,6 +144,9 @@ export function CreateUrlDialog({ children }: { children: React.ReactNode }) {
                 {errors.shortCode.message}
               </p>
             )}
+            <p className="text-xs text-muted-foreground">
+              Alias personalizado está disponível nos planos pagos.
+            </p>
           </div>
 
           <div className="space-y-2">

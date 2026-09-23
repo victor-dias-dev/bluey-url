@@ -1,9 +1,14 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
+import { config } from '../config';
+import { isValidHostname, normalizeHostname } from '../domain/hostname';
+import { planPolicy, Plan } from '../domain/plans';
 
 const createDomainSchema = z.object({
-  domain: z.string().min(1),
+  domain: z.string().trim().min(1).refine(isValidHostname, {
+    message: 'Domain must be a public hostname such as links.example.com',
+  }),
 });
 
 export async function domainRoutes(server: FastifyInstance) {
@@ -34,8 +39,8 @@ export async function domainRoutes(server: FastifyInstance) {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { userId } = request.user as { userId: string };
     const body = createDomainSchema.parse(request.body);
+    const hostname = normalizeHostname(body.domain);
     
-    // Check user plan
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -45,10 +50,13 @@ export async function domainRoutes(server: FastifyInstance) {
         error: 'User not found' 
       });
     }
+
+    if (!planPolicy(user.plan as Plan).customDomains) {
+      return reply.code(403).send({ error: 'Custom domains are available on paid plans.' });
+    }
     
-    // Check if domain already exists
     const existing = await prisma.domain.findUnique({
-      where: { domain: body.domain },
+      where: { domain: hostname },
     });
     
     if (existing) {
@@ -58,22 +66,15 @@ export async function domainRoutes(server: FastifyInstance) {
     // Create domain (unverified initially)
     const domain = await prisma.domain.create({
       data: {
-        domain: body.domain,
+        domain: hostname,
         userId,
         verified: false,
       },
     });
     
-    // TODO: Generate DNS verification token
-    // TODO: Return verification instructions
-    
     return reply.code(201).send({
       ...domain,
-      verificationInstructions: {
-        type: 'TXT',
-        name: `_bluey.${body.domain}`,
-        value: `verification-token-${domain.id}`, // TODO: Generate proper token
-      },
+      verificationInstructions: verificationInstructions(domain.domain, domain.id),
     });
   });
   
@@ -123,11 +124,14 @@ export async function domainRoutes(server: FastifyInstance) {
       return reply.code(404).send({ error: 'Domain not found' });
     }
     
-    // TODO: Implement DNS verification logic
-    // Check TXT record: _bluey.{domain}
-    // If verified, update domain
-    
-    // For now, return mock verification
+    if (!config.domain.autoVerify) {
+      return reply.code(501).send({
+        error: 'DNS verification is not implemented yet.',
+        verificationInstructions: verificationInstructions(domain.domain, domain.id),
+      });
+    }
+
+    // Local-only escape hatch. Production ignores DOMAIN_AUTO_VERIFY.
     const verified = await prisma.domain.update({
       where: { id },
       data: {
@@ -164,7 +168,7 @@ export async function domainRoutes(server: FastifyInstance) {
     
     if (urlCount > 0) {
       return reply.code(400).send({ 
-        error: 'Cannot delete domain with active URLs' 
+        error: 'Cannot delete a domain that still has links' 
       });
     }
     
@@ -174,5 +178,14 @@ export async function domainRoutes(server: FastifyInstance) {
     
     return reply.code(204).send();
   });
+}
+
+function verificationInstructions(hostname: string, domainId: string) {
+  return {
+    type: 'TXT',
+    name: `_bluey.${hostname}`,
+    value: `bluey-verification=${domainId}`,
+    status: 'DNS lookups are not implemented yet. The value above is the intended record.',
+  };
 }
 

@@ -29,15 +29,9 @@ docker-compose -f docker-compose.dev.yml down
 
 ### Configurar Backend para Docker
 
-1. Copie o arquivo de exemplo:
+1. Copie o arquivo de exemplo e ajuste se precisar:
 ```bash
-cd backend
-cp .env.docker .env
-```
-
-2. Copie o arquivo de exemplo e configure:
-```bash
-cp env.docker.example .env
+cp backend/env.docker.example backend/.env
 ```
 
 O arquivo `.env` deve conter as credenciais do Docker Compose:
