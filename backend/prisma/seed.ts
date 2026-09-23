@@ -22,24 +22,35 @@ async function main() {
   
   console.log('✅ Created test user:', user.email);
   
-  const existingUrl = await prisma.url.findFirst({
-    where: {
-      shortCode: 'test123',
-      domainId: null,
-      userId: user.id,
-    },
-  });
+  const samples = [
+    { shortCode: 'test123', originalUrl: 'https://example.com' },
+    { shortCode: 'docs', originalUrl: 'https://github.com/victor-dias-dev/bluey-url' },
+    { shortCode: 'nextjs', originalUrl: 'https://nextjs.org' },
+    { shortCode: 'prisma', originalUrl: 'https://www.prisma.io' },
+  ];
 
-  const url = existingUrl ?? await prisma.url.create({
-    data: {
-      shortCode: 'test123',
-      originalUrl: 'https://example.com',
-      userId: user.id,
-      redirectType: 'PERMANENT',
-    },
-  });
-  
-  console.log('✅ Created test URL:', url.shortCode);
+  for (const sample of samples) {
+    const existingUrl = await prisma.url.findFirst({
+      where: {
+        shortCode: sample.shortCode,
+        domainId: null,
+        userId: user.id,
+      },
+    });
+
+    if (!existingUrl) {
+      await prisma.url.create({
+        data: {
+          shortCode: sample.shortCode,
+          originalUrl: sample.originalUrl,
+          userId: user.id,
+          redirectType: 'PERMANENT',
+        },
+      });
+    }
+
+    console.log('✅ Created test URL:', sample.shortCode);
+  }
   
   console.log('✨ Seeding completed!');
 }

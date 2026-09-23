@@ -1,36 +1,40 @@
 # Bluey URL
 
-[![CI](https://github.com/victor-dias-dev/bluey-url/actions/workflows/ci.yml/badge.svg)](https://github.com/victor-dias-dev/bluey-url/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
-Bluey URL is an open-source shortener. It creates links, redirects them from cache, and gives each account a dashboard for aliases, custom domains, and analytics.
-
-The project is at [0.1.0](CHANGELOG.md). Redirects, accounts, and plan limits work. The analytics worker and DNS verification do not. That split is documented on purpose: the [roadmap](ROADMAP.md) is the list of ways to contribute.
-
 [Português](README.pt-BR.md)
 
-## Status
+[![CI](https://github.com/victor-dias-dev/bluey-url/actions/workflows/ci.yml/badge.svg)](https://github.com/victor-dias-dev/bluey-url/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-| Capability | State |
-| --- | --- |
-| Register, log in, and manage links | Works |
-| `301` / `302` redirects, with expiration | Works |
-| Redis cache that preserves status code and expiration | Works |
-| Free-plan limit, paid custom aliases and domains | Works |
-| Click analytics on the dashboard | The API shape exists. Clicks are queued and not stored yet. |
-| Custom domain DNS verification | The expected TXT record is returned. The verify call responds with `501`. |
+Open-source URL shortener. A short code resolves from Redis, falls back to PostgreSQL, and redirects with `301` or `302`. Each account has a dashboard for links, aliases, and custom domains.
+
+A short code is unique per domain. A click is published to a queue and does not block the redirect. The worker that stores those clicks, and the DNS check for a custom domain, are still open. See [ROADMAP.md](ROADMAP.md).
+
+![URLs](docs/screenshots/urls.png)
+![Dashboard](docs/screenshots/dashboard.png)
+![Settings](docs/screenshots/settings.png)
+
+## What is in the app
+
+- Register, login, and account settings
+- Short links, custom aliases on paid plans, expiration, and `301` / `302`
+- Custom domains on paid plans
+- Dashboard
+- Analytics endpoints for clicks, once a worker persists the queued events
+
+## Requirements
+
+- Node.js 20
+- npm 10
+- Docker and Docker Compose
 
 ## Quick start
 
-Requirements: Node.js 20 and Docker.
-
 ```bash
-git clone https://github.com/victor-dias-dev/bluey-url.git
-cd bluey-url
 npm install
 docker compose -f docker-compose.dev.yml up -d
 cp backend/env.docker.example backend/.env
 cp frontend/.env.example frontend/.env.local
+npm run prisma:generate
 npm run prisma:migrate
 npm run prisma:seed
 ```
@@ -38,41 +42,51 @@ npm run prisma:seed
 In two terminals:
 
 ```bash
-npm run dev:backend   # http://localhost:3000
-npm run dev:frontend  # http://localhost:3001
+npm run dev:backend
+npm run dev:frontend
 ```
 
-The seed command creates `test@example.com` / `password123` for local use. Do not run it against a database you care about. Details are in [SECURITY.md](SECURITY.md).
+The seed user is `test@example.com` / `password123`.
 
-Postgres is on `localhost:5432` (`bluey_user` / `bluey_password` / `bluey_url`). Redis is on `localhost:6379`.
+The API listens on http://localhost:3000. Health: `GET /health`. The dashboard listens on http://localhost:3001.
 
-## Common commands
+The API warns in production when `JWT_SECRET` is still a placeholder. Copy the examples and keep real secrets out of git.
 
-| Command | What it does |
-| --- | --- |
-| `npm test` | Domain and configuration tests |
-| `npm run lint` | Backend ESLint and Next.js lint |
-| `npm run typecheck` | TypeScript in both packages |
-| `npm run dev:backend` | API with reload |
-| `npm run dev:frontend` | Dashboard |
-| `npm run prisma:studio` | Database UI |
+| Variable                  | Purpose                                              |
+| ------------------------- | ---------------------------------------------------- |
+| `NODE_ENV`                | `development`, `test`, or `production`               |
+| `PORT`                    | HTTP port                                            |
+| `DATABASE_URL`            | PostgreSQL                                           |
+| `REDIS_URL`               | Redis                                                |
+| `JWT_SECRET`              | JWT secret                                           |
+| `JWT_EXPIRES_IN`          | Access token lifetime (`7d`, `1h`)                   |
+| `CORS_ORIGIN`             | Allowed origins (every origin in development)        |
+| `DOMAIN_AUTO_VERIFY`      | Skip DNS locally. Ignored when `NODE_ENV=production` |
 
-## Repository map
+On the dashboard, set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` when the API is not on `http://localhost:3000`.
 
+## Checks
+
+```bash
+npm test
+npm run lint
+npm run typecheck
+npm run build:backend
+npm run build:frontend
 ```
+
+## Repository
+
+```text
 backend/     Fastify API, Prisma schema, domain rules
 frontend/    Next.js dashboard
-docs/        Architecture and business rules, matched to the code
+docs/        Architecture, business rules, and screenshots
 ```
 
-Read [docs/architecture.md](docs/architecture.md) before changing the redirect path. The rules and their current status are in [docs/business-rules.md](docs/business-rules.md). Docker is covered in [DOCKER.md](DOCKER.md).
+Redirect path: [docs/architecture.md](docs/architecture.md). Rules and what is enforced today: [docs/business-rules.md](docs/business-rules.md). Docker: [DOCKER.md](DOCKER.md).
 
 ## Contributing
 
-Issues and pull requests are welcome in English or Portuguese. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [roadmap](ROADMAP.md). Small pull requests that close a listed gap are the ones that get reviewed first.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports go through [private vulnerability reporting](https://github.com/victor-dias-dev/bluey-url/security/advisories/new), described in [SECURITY.md](SECURITY.md).
 
-Please report vulnerabilities through [private security advisories](https://github.com/victor-dias-dev/bluey-url/security/advisories/new), not through a public issue.
-
-## License
-
-[MIT](LICENSE)
+Licensed under the [MIT License](LICENSE).
