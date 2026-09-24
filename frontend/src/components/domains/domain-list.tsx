@@ -22,7 +22,7 @@ export function DomainList() {
       <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12">
         <p className="text-muted-foreground">Nenhum domínio cadastrado.</p>
         <p className="mt-2 text-sm text-muted-foreground">
-          Clique em "Novo Domínio" para começar.
+          Clique em Novo Domínio para começar.
         </p>
       </div>
     );

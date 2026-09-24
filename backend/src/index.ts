@@ -1,27 +1,30 @@
 import Fastify from 'fastify';
+import { ZodError } from 'zod';
 import { config } from './config';
 import { registerPlugins } from './plugins';
 import { registerRoutes } from './routes';
 
-// Configure logger based on environment
-const loggerConfig: any = {
+const loggerConfig: {
+  level: string;
+  transport?: {
+    target: string;
+    options: {
+      translateTime: string;
+      ignore: string;
+    };
+  };
+} = {
   level: config.logLevel,
 };
 
-// Only use pino-pretty in development (it's a dev dependency)
 if (config.nodeEnv === 'development') {
-  try {
-    loggerConfig.transport = {
-      target: 'pino-pretty',
-      options: {
-        translateTime: 'HH:MM:ss Z',
-        ignore: 'pid,hostname',
-      },
-    };
-  } catch (err) {
-    // Fallback if pino-pretty is not available
-    console.warn('pino-pretty not available, using default logger');
-  }
+  loggerConfig.transport = {
+    target: 'pino-pretty',
+    options: {
+      translateTime: 'HH:MM:ss Z',
+      ignore: 'pid,hostname',
+    },
+  };
 }
 
 const server = Fastify({
@@ -33,12 +36,34 @@ async function start() {
     // Register plugins
     await registerPlugins(server);
 
-    // Register routes
     await registerRoutes(server);
+
+    server.setErrorHandler((error, request, reply) => {
+      if (error instanceof ZodError) {
+        return reply.code(400).send({
+          error: 'Validation failed',
+          details: error.issues.map((issue) => ({
+            path: issue.path.join('.'),
+            message: issue.message,
+          })),
+        });
+      }
+
+      const statusCode = error.statusCode && error.statusCode >= 400 ? error.statusCode : 500;
+      if (statusCode >= 500) {
+        request.log.error({ err: error }, 'request failed');
+      }
+
+      const message = statusCode >= 500 && config.nodeEnv === 'production'
+        ? 'Internal server error'
+        : error.message;
+
+      return reply.code(statusCode).send({ error: message });
+    });
 
     // Start server
     await server.listen({ port: config.port, host: '0.0.0.0' });
-    server.log.info(`🚀 Server running on http://localhost:${config.port}`);
+    server.log.info(`Server running on http://localhost:${config.port}`);
   } catch (err) {
     const error = err as Error;
     server.log.error({ err: error }, 'Failed to start server');

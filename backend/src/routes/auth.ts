@@ -2,10 +2,11 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import bcrypt from 'bcryptjs';
+import { config } from '../config';
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(8),
   name: z.string().optional(),
 });
 
@@ -49,7 +50,7 @@ export async function authRoutes(server: FastifyInstance) {
     });
     
     // Generate JWT token
-    const token = server.jwt.sign({ userId: user.id }, { expiresIn: '7d' });
+    const token = server.jwt.sign({ userId: user.id }, { expiresIn: config.jwt.expiresIn });
     
     return reply.code(201).send({
       user,
@@ -78,7 +79,7 @@ export async function authRoutes(server: FastifyInstance) {
     }
     
     // Generate JWT token
-    const token = server.jwt.sign({ userId: user.id }, { expiresIn: '7d' });
+    const token = server.jwt.sign({ userId: user.id }, { expiresIn: config.jwt.expiresIn });
     
     return {
       user: {

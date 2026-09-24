@@ -1,8 +1,21 @@
 {
   "name": "bluey-url",
-  "version": "1.0.0",
-  "description": "URL Shortener SaaS - Monorepo",
+  "version": "0.1.0",
+  "description": "Open-source URL shortener with custom domains and click analytics",
   "private": true,
+  "license": "MIT",
+  "author": "victor-dias-dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/victor-dias-dev/bluey-url.git"
+  },
+  "bugs": {
+    "url": "https://github.com/victor-dias-dev/bluey-url/issues"
+  },
+  "homepage": "https://github.com/victor-dias-dev/bluey-url#readme",
+  "engines": {
+    "node": ">=20 <22"
+  },
   "workspaces": [
     "backend",
     "frontend"
@@ -12,12 +25,15 @@
     "dev:frontend": "npm run dev --workspace=frontend",
     "build:backend": "npm run build --workspace=backend",
     "build:frontend": "npm run build --workspace=frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspace=backend",
     "prisma:generate": "npm run prisma:generate --workspace=backend",
     "prisma:migrate": "npm run prisma:migrate --workspace=backend",
+    "prisma:seed": "npm run prisma:seed --workspace=backend",
     "prisma:studio": "npm run prisma:studio --workspace=backend"
   },
   "devDependencies": {
     "typescript": "^5.3.3"
   }
 }
-

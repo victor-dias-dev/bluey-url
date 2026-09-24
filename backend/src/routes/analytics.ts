@@ -97,7 +97,10 @@ export async function analyticsRoutes(server: FastifyInstance) {
   }, async (request: FastifyRequest, reply: FastifyReply) => {
     const { userId } = request.user as { userId: string };
     const { urlId } = request.params as { urlId: string };
-    const limit = parseInt((request.query as { limit?: string })?.limit || '50', 10);
+    const requestedLimit = parseInt((request.query as { limit?: string })?.limit || '50', 10);
+    const limit = Number.isFinite(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 100)
+      : 50;
     
     // Verify URL belongs to user
     const url = await prisma.url.findFirst({

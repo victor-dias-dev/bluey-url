@@ -1,11 +1,13 @@
 {
   "name": "@bluey-url/backend",
-  "version": "1.0.0",
-  "description": "Backend API for Bluey URL Shortener",
+  "version": "0.1.0",
+  "description": "API for the Bluey URL shortener",
+  "license": "MIT",
+  "private": true,
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
@@ -14,7 +16,8 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test src/domain/*.test.ts src/config/*.test.ts"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
